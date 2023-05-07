@@ -16,7 +16,7 @@ pub fn generate_repo_commands() -> Vec<Box<dyn FnOnce() -> Option<serde_json::Va
     });
 
     let set_program_path = Box::new(|| {
-        prompt_for_field("program id").map(|program_path| {
+        prompt_for_field("program path").map(|program_path| {
             json!({
                 "set_program_path": {
                     "path": program_path
