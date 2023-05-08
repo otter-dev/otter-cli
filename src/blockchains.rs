@@ -3,8 +3,8 @@ use std::fmt::Display;
 use inquire::{
     error::InquireResult, list_option::ListOption, validator::Validation, MultiSelect, Select, Text,
 };
-use serde::{Serialize, Deserialize};
-use strum::{EnumIter, IntoEnumIterator, Display};
+use serde::{Deserialize, Serialize};
+use strum::{Display, EnumIter, IntoEnumIterator};
 
 pub mod solana;
 
@@ -33,7 +33,7 @@ impl Blockchain {
         }
     }
 
-    pub fn get_task_command_list(&self) -> Vec<String> {
+    pub fn get_task_command_list(&self) -> Vec<serde_json::Value> {
         match self {
             Blockchain::Solana => solana::get_task_command_list(),
             Blockchain::Aptos => todo!(),
@@ -66,4 +66,3 @@ fn prompt_for_multiselect<T: Display>(text: &str, options: Vec<T>) -> InquireRes
         .prompt();
     selected_tasks
 }
-

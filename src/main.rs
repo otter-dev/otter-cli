@@ -16,7 +16,7 @@ mod endpoints;
 
 const CLIENT_ID: &str = "Iv1.4de4d4a1d7ba2f81";
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> InquireResult<()> {
     let task = select_endpoint()?;
 

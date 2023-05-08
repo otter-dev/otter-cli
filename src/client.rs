@@ -26,7 +26,7 @@ pub async fn process_create_task(
     git_repo: String,
     branch_or_hash: String,
     repo_cmds: Vec<serde_json::Value>,
-    task_cmds: Vec<String>,
+    task_cmds: Vec<serde_json::Value>,
 ) -> Result<serde_json::Value> {
     let client = create_client()?;
     let payload = json!({
@@ -34,8 +34,11 @@ pub async fn process_create_task(
         "branch_or_hash": branch_or_hash,
         "blockchain": chain,
         "repo_cmds": repo_cmds,
-        "task_cmds": task_cmds
+        "tasks": task_cmds
     });
+
+    println!("payload");
+    println!("{:#?}", &serde_json::to_string(&payload));
 
     client
         .post(format!("{API_URL}/job"))

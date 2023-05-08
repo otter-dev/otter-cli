@@ -51,8 +51,12 @@ pub enum SolanaTaskCommand {
     FormalVerification,
 }
 
-pub fn get_task_command_list() -> Vec<String> {
-    let tasks = SolanaTaskCommand::iter().map(|c| serde_json::to_string(&c).unwrap()).collect();
+pub fn get_task_command_list() -> Vec<serde_json::Value> {
+    let tasks = SolanaTaskCommand::iter().map(|c| c.to_string()).collect();
     let ans = prompt_for_multiselect("Select tasks: ", tasks);
-    ans.unwrap()
+    let selection = ans.unwrap();
+    selection
+        .into_iter()
+        .map(|s| json!({"blockchain": "solana", "data": s}))
+        .collect()
 }
