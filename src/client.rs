@@ -37,9 +37,6 @@ pub async fn process_create_task(
         "tasks": task_cmds
     });
 
-    println!("payload");
-    println!("{:#?}", &serde_json::to_string(&payload));
-
     client
         .post(format!("{API_URL}/job"))
         .json(&payload)
