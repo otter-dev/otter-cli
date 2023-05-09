@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use anyhow::anyhow;
+use anyhow::Result;
 
 use client::process_get_job;
 use endpoints::Endpoint;
@@ -18,20 +18,27 @@ const CLIENT_ID: &str = "Iv1.4de4d4a1d7ba2f81";
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> InquireResult<()> {
+    tracing_subscriber::fmt::init();
     let task = select_endpoint()?;
 
-    match task {
+    let res = match task {
         Endpoint::Authenticate => authenticate().await,
         Endpoint::CreateTask => create_tasks().await,
         Endpoint::GetTask => get_task().await,
+    };
+
+    if let Err(e) = res {
+        tracing::error!("{:?}", e);
     }
+
+    Ok(())
 }
 
 fn is_authenticated() -> bool {
     otter_auth_client::get_config().is_ok()
 }
 
-async fn authenticate() -> InquireResult<()> {
+async fn authenticate() -> Result<()> {
     let auth = otter_auth_client::get_github_auth_code(CLIENT_ID)
         .await
         .map_err(|e| InquireError::Custom(Box::new(e)))?;
@@ -44,11 +51,9 @@ async fn authenticate() -> InquireResult<()> {
     Ok(())
 }
 
-async fn create_tasks() -> InquireResult<()> {
+async fn create_tasks() -> Result<()> {
     if !is_authenticated() {
-        return Err(InquireError::Custom(
-            anyhow!("You must authenticate before creating tasks").into(),
-        ));
+        anyhow::bail!("You must authenticate before creating tasks");
     }
 
     let chain = select_blockchain()?;
@@ -77,11 +82,9 @@ async fn create_tasks() -> InquireResult<()> {
     Ok(())
 }
 
-async fn get_task() -> InquireResult<()> {
+async fn get_task() -> Result<()> {
     if !is_authenticated() {
-        return Err(InquireError::Custom(
-            anyhow!("You must authenticate before creating tasks").into(),
-        ));
+        anyhow::bail!("You must authenticate before creating tasks");
     }
 
     let job_id = Text::new("Enter job id:")
@@ -93,9 +96,8 @@ async fn get_task() -> InquireResult<()> {
     match response {
         Ok(response) => {
             println!("{:#?}", response);
+            Ok(())
         }
-        Err(e) => println!("Error : {}", e),
+        Err(e) => Err(e)
     }
-
-    Ok(())
 }

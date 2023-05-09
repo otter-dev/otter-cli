@@ -8,8 +8,11 @@ pub fn generate_repo_commands() -> Vec<Box<dyn FnOnce() -> Option<serde_json::Va
     let set_program_id = Box::new(|| {
         prompt_for_field("program id").map(|program_id| {
             json!({
-                "set_program_id": {
-                    "program_id": program_id
+                "blockchain": "solana",
+                "data": {
+                    "set_program_id": {
+                        "program_id": program_id
+                    }
                 }
             })
         })
@@ -18,8 +21,11 @@ pub fn generate_repo_commands() -> Vec<Box<dyn FnOnce() -> Option<serde_json::Va
     let set_program_path = Box::new(|| {
         prompt_for_field("program path").map(|program_path| {
             json!({
-                "set_program_path": {
-                    "path": program_path
+                "blockchain": "solana",
+                "data": {
+                    "set_program_path": {
+                        "path": program_path
+                    }
                 }
             })
         })
@@ -28,8 +34,11 @@ pub fn generate_repo_commands() -> Vec<Box<dyn FnOnce() -> Option<serde_json::Va
     let set_solana_version = Box::new(|| {
         prompt_for_field("solana version").map(|version| {
             json!({
-                "set_solana_version": {
-                    "version": version
+                "blockchain": "solana",
+                "data": {
+                    "set_solana_version": {
+                        "version": version
+                    }
                 }
             })
         })

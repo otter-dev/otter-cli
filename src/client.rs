@@ -41,20 +41,13 @@ pub async fn process_create_task(
         .post(format!("{API_URL}/job"))
         .json(&payload)
         .send()
-        .await;
+        .await
+        .context("request error")?
+        .text()
+        .await
+        .context("error reading response")?;
 
-    if let Err(e) = res {
-        anyhow::bail!(format!("request error: {:?}", e));
-    }
-
-    let res = res.unwrap();
-    let res = res.text().await;
-
-    if let Err(e) = res {
-        anyhow::bail!(format!("error reading response: {:?}", e));
-    }
-
-    let res = res.unwrap();
+    tracing::debug!("{:?}", &res);
     serde_json::from_str(&res).context("error converting to json")
 }
 
