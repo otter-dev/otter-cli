@@ -98,6 +98,6 @@ async fn get_task() -> Result<()> {
             println!("{:#?}", response);
             Ok(())
         }
-        Err(e) => Err(e)
+        Err(e) => Err(e),
     }
 }
