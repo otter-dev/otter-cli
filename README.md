@@ -1,42 +1,24 @@
 # Cli Tool to run Otter Suite tests
 
+## Installation
+
+```bash
+cargo install --git https://github.com/otter-dev/otter-cli
+```
+
 ## Usage
 
-```bash
-suite-cli --help
-```
+To use Otter CLI we need to Auth ourself: (You need to be whitelisted contact Osec team if any help needed here)
 
-### Commands
+1. Open the command prompt or terminal on your computer.
+2. Run `otr` and select `authenticate`
+3. Open the given link and Enter your code and give permission for application.
+4. Once the authentication is completed we can now submit jobs to Otter API via CLI.
 
-```bash
-suite-cli [command] 
-```
+## Creating and Retrieving Jobs
 
-- `verify`      Verifies an onchain program aganist given repo
-- `create-task`  Creates a process to run given tasks on the repo
-- `help`         Print this message or the help of the given subcommand(s)
-
-#### Verify
-
-```bash
-suite-cli verify -b <BLOCKCHAIN> -r <GIT_REMOTE> -c <GIT_COMMIT> -p <PROGRAM_ID>
-```
-
-- `-b, --blockchain <BLOCKCHAIN>`  Blockchain to use (available: solana, ethereum, aptos, sui)
-- `-r, --remote <GIT_REMOTE>`      Git remote to use
-- `-c, --commit <GIT_COMMIT>`      Git commit to use
-- `-p, --program <PROGRAM_ID>`     Program id/address of the program deployed on the blockchain.
-
-#### Create Task
-
-```bash
-suite-cli create-task <BLOCKCHAIN> -r <GIT_REMOTE> -c <GIT_COMMIT> -t <TASKS>
-```
-
-- `<BLOCKCHAIN>`  Blockchain to use (available: solana, ethereum, aptos, sui)
-- `-r, --remote <GIT_REMOTE>`      Git remote to use
-- `-c, --commit <GIT_COMMIT>`      Git commit to use
-- `-t, --tasks <TASKS>`            Tasks to run.
-  - None to run all tasks
-  - Comma separated list of tasks to run
-  - `suite-cli create-task <BLOCKCHAIN> --tasks` or `suite-cli create-task <BLOCKCHAIN> -t` to see all available tasks for given blockchain
+1. Now open `otr` and select `CreateTask`
+2. Select blockchain as Solana.
+3. Input the required arguments for the Job and select which tasks to run on this particular job.
+4. After submitting this you will get a `jobId` we need this to retrieve the status of the job.
+5. Run `otr` and select `GetTask` and enter the Job Id we got to get the results of the Job.
