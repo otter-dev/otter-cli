@@ -571,19 +571,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
-name = "otter-auth-client"
-version = "0.1.0"
-source = "git+https://github.com/otter-dev/otter-auth-client#3e984cb15e2e011c6208d8a9915591b301a33f75"
-dependencies = [
- "dirs",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "otter-cli"
+name = "otr"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -597,6 +585,18 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "otter-auth-client"
+version = "0.1.0"
+source = "git+https://github.com/otter-dev/otter-auth-client#3e984cb15e2e011c6208d8a9915591b301a33f75"
+dependencies = [
+ "dirs",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
