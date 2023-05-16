@@ -17,6 +17,6 @@ tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["json"] }
 
 [[bin]]
-name = "otter-cli"
+name = "otr"
 path = "src/main.rs"
 
