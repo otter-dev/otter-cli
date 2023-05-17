@@ -47,7 +47,7 @@ pub fn generate_repo_commands() -> Vec<Box<dyn FnOnce() -> Option<serde_json::Va
     vec![set_program_id, set_program_path, set_solana_version]
 }
 
-#[derive(Display, EnumIter, Serialize, Deserialize)]
+#[derive(Debug, Display, EnumIter, clap::ValueEnum, Clone, Serialize, Deserialize)]
 #[strum(serialize_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum SolanaTaskCommand {
@@ -65,6 +65,13 @@ pub fn get_task_command_list() -> Vec<serde_json::Value> {
     let ans = prompt_for_multiselect("Select tasks: ", tasks);
     let selection = ans.unwrap();
     selection
+        .into_iter()
+        .map(|s| json!({"blockchain": "solana", "data": s}))
+        .collect()
+}
+
+pub fn get_task_command_list_from_vec(tasks: Vec<SolanaTaskCommand>) -> Vec<serde_json::Value> {
+    tasks
         .into_iter()
         .map(|s| json!({"blockchain": "solana", "data": s}))
         .collect()
