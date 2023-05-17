@@ -80,4 +80,3 @@ pub struct VerifyTaskSolanaArgs {
     #[clap(long, short)]
     pub path: String,
 }
-

@@ -3,14 +3,12 @@ use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Copy, Clone)]
 pub enum Endpoint {
-    Authenticate,
     CreateTask,
     GetTask,
 }
 
 impl Endpoint {
-    pub const VARIANTS: &'static [Endpoint] =
-        &[Self::Authenticate, Self::CreateTask, Self::GetTask];
+    pub const VARIANTS: &'static [Endpoint] = &[Self::CreateTask, Self::GetTask];
 }
 
 impl Display for Endpoint {

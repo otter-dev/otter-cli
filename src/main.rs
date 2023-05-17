@@ -38,6 +38,11 @@ async fn main() -> InquireResult<()> {
 }
 
 async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
+    // If the user is not authenticated, authenticate them
+    if !is_authenticated() {
+        let _ = authenticate().await;
+    }
+    // Process the command
     match cli.command {
         Some(Commands::Create(args)) => {
             println!("Create {:?}", args);
@@ -104,8 +109,11 @@ async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
 async fn interactive_mode() -> InquireResult<()> {
     let task = select_endpoint()?;
 
+    if !is_authenticated() {
+        let _ = authenticate().await;
+    }
+
     let res = match task {
-        Endpoint::Authenticate => authenticate().await,
         Endpoint::CreateTask => create_tasks().await,
         Endpoint::GetTask => get_task().await,
     };
