@@ -9,16 +9,17 @@ use crate::blockchains::solana::SolanaTaskCommand;
 pub struct CliArgs {
     #[clap(subcommand)]
     pub command: Option<Commands>,
+    /// Use the interactive mode
     #[clap(short = 'i', long = "interactive")]
     pub interactive: bool,
 }
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    /// Creates a process to run given tasks on the repo
+    /// Create a job to run given tasks on the repo
     #[clap(arg_required_else_help = true)]
     Create(CreateJob),
-    /// Get the status of a job
+    /// Get the status of a job by ID
     #[clap(arg_required_else_help = true)]
     Get(GetJob),
     /// Submit formal verification task to the Otter Suite
