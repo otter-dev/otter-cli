@@ -57,7 +57,7 @@ pub async fn process_create_task(
     Ok(res)
 }
 
-pub async fn process_get_job(job_id: String) -> Result<JobRespose> {
+pub async fn process_get_job(job_id: &str) -> Result<JobRespose> {
     let client = create_client()?;
     client
         .get(format!("{API_URL}/job?id={}", job_id))
@@ -73,10 +73,10 @@ pub async fn listen_for_changes(job_id: &str) {
     println!("Job created with ID: {}", job_id);
     println!("Waiting for job to process...");
     loop {
-        let response = process_get_job(job_id.to_string()).await.unwrap();
-        println!("{:#?}", response.job_status.job_state);
+        let response = process_get_job(job_id).await.unwrap();
         if response.job_status.job_state == "success" {
             println!("Job completed!");
+            println!("{:#?}", response.tasks);
             break;
         } else if response.job_status.job_state == "failure" {
             println!("Job failed!");

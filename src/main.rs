@@ -91,7 +91,7 @@ async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
             Ok(())
         }
         Some(Commands::Get(args)) => {
-            let response = process_get_job(args.id).await;
+            let response = process_get_job(&args.id).await;
 
             match response {
                 Ok(response) => {
@@ -168,7 +168,7 @@ async fn get_task() -> Result<()> {
         .with_validator(required!())
         .prompt()?;
 
-    let response = process_get_job(job_id).await;
+    let response = process_get_job(&job_id).await;
 
     match response {
         Ok(response) => {
