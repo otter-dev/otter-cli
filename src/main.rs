@@ -47,7 +47,6 @@ async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
     // Process the command
     match cli.command {
         Some(Commands::Create(args)) => {
-            println!("Create {:?}", args);
             match args.create_task_commands {
                 CreateTaskCommands::Solana(args) => {
                     let chain = Blockchain::Solana;
