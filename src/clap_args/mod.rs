@@ -56,7 +56,7 @@ pub struct CreateTaskSolanaArgs {
     /// Commit of the project to use
     #[clap(long, short)]
     pub commit: String,
-    /// Task command to run
+    /// Task commands to run
     #[clap(
         long,
         short,
