@@ -1,9 +1,15 @@
+use std::println;
+
 use anyhow::{Context, Result};
 use otter_auth_client::get_config;
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde_json::json;
+use tokio::time::{sleep, Duration};
 
-use crate::blockchains::Blockchain;
+use crate::{
+    blockchains::Blockchain,
+    models::{CreateJobResponse, JobRespose},
+};
 
 const API_URL: &str = "https://api.osec.io";
 
@@ -27,7 +33,7 @@ pub async fn process_create_task(
     branch_or_hash: String,
     repo_cmds: Vec<serde_json::Value>,
     task_cmds: Vec<serde_json::Value>,
-) -> Result<serde_json::Value> {
+) -> Result<CreateJobResponse> {
     let client = create_client()?;
     let payload = json!({
         "repo": git_repo,
@@ -43,22 +49,39 @@ pub async fn process_create_task(
         .send()
         .await
         .context("request error")?
-        .text()
+        .json::<CreateJobResponse>()
         .await
-        .context("error reading response")?;
+        .context("error reading response..")?;
 
     tracing::debug!("{:?}", &res);
-    serde_json::from_str(&res).context("error converting to json")
+    Ok(res)
 }
 
-pub async fn process_get_job(job_id: String) -> Result<serde_json::Value> {
+pub async fn process_get_job(job_id: String) -> Result<JobRespose> {
     let client = create_client()?;
     client
         .get(format!("{API_URL}/job?id={}", job_id))
         .send()
         .await
         .context("Error sending request")?
-        .json()
+        .json::<JobRespose>()
         .await
         .context("Error getting response body")
+}
+
+pub async fn listen_for_changes(job_id: &str) {
+    println!("Job created with ID: {}", job_id);
+    println!("Waiting for job to process...");
+    loop {
+        let response = process_get_job(job_id.to_string()).await.unwrap();
+        println!("{:#?}", response.job_status.job_state);
+        if response.job_status.job_state == "success" {
+            println!("Job completed!");
+            break;
+        } else if response.job_status.job_state == "failure" {
+            println!("Job failed!");
+            break;
+        }
+        sleep(Duration::from_secs(2)).await;
+    }
 }

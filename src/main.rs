@@ -14,6 +14,7 @@ use crate::{
     auth::{authenticate, is_authenticated},
     blockchains::solana::get_task_command_list_from_vec,
     blockchains::{select_blockchain, Blockchain},
+    client::listen_for_changes,
     client::process_create_task,
     endpoints::select_endpoint,
 };
@@ -23,6 +24,7 @@ mod blockchains;
 mod clap_args;
 mod client;
 mod endpoints;
+mod models;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> InquireResult<()> {
@@ -56,7 +58,8 @@ async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
                             .await;
                     match response {
                         Ok(response) => {
-                            println!("Job created : {:#?}", response);
+                            let job_id = response.job_id;
+                            listen_for_changes(&job_id).await;
                         }
                         Err(e) => println!("Error : {}", e),
                     }
@@ -80,7 +83,8 @@ async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
                 process_create_task(chain, args.remote, args.commit, repo_cmds, task_cmds).await;
             match response {
                 Ok(response) => {
-                    println!("Job created : {:#?}", response);
+                    let job_id = response.job_id;
+                    listen_for_changes(&job_id).await;
                 }
                 Err(e) => println!("Error : {}", e),
             }
