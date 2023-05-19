@@ -25,6 +25,7 @@ mod clap_args;
 mod client;
 mod endpoints;
 mod models;
+mod output;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> InquireResult<()> {

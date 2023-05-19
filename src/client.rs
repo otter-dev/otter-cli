@@ -9,6 +9,7 @@ use tokio::time::{sleep, Duration};
 use crate::{
     blockchains::Blockchain,
     models::{CreateJobResponse, JobRespose},
+    output::print_pretty_output,
 };
 
 const API_URL: &str = "https://api.osec.io";
@@ -71,12 +72,15 @@ pub async fn process_get_job(job_id: &str) -> Result<JobRespose> {
 
 pub async fn listen_for_changes(job_id: &str) {
     println!("Job created with ID: {}", job_id);
+    println!("Alternatively, you can close this window and run `otr get -i {}` to view the result later", job_id);
     println!("Waiting for job to process...");
     loop {
         let response = process_get_job(job_id).await.unwrap();
         if response.job_status.job_state == "success" {
             println!("Job completed!");
-            println!("{:#?}", response.tasks);
+            for task in response.tasks {
+                print_pretty_output(&task.task_type, task.task_result);
+            }
             break;
         } else if response.job_status.job_state == "failure" {
             println!("Job failed!");

@@ -2,6 +2,8 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::blockchains::solana::SolanaTaskCommand;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Job {
     pub id: String,
@@ -35,10 +37,18 @@ pub struct JobRespose {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "blockchain", content = "data", rename_all = "snake_case")]
+pub enum TaskCommand {
+    Solana(SolanaTaskCommand),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CreateJobResponse {
     pub job_id: String,
     pub blockchain: String,
     pub builder_cmds: Vec<Value>,
     pub repo_cmds: Vec<Value>,
-    pub tasks: Vec<Value>,
+    pub tasks: Vec<TaskCommand>,
 }
+
+
