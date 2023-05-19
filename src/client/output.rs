@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+use super::models::TaskError;
+
 #[derive(Serialize, Deserialize)]
 struct OverflowCheckResult {
     pub success: bool,
@@ -19,16 +21,15 @@ struct VerifyGithubBuildIsOnchainResult {
     last_deployed_slot: Option<u64>,
 }
 
-pub fn print_pretty_output(task_type: &str, output: Option<serde_json::Value>) {
+pub fn pretty_print_output(task_type: &str, output: Option<serde_json::Value>) {
     let output = output.unwrap_or(json!(""));
     match task_type {
         "cargo_build" | "cargo_clippy" | "build_bpf" => {
             let result: TaskResult = serde_json::from_value(output).unwrap();
             if result.success {
-                println!("Task succeeded!");
-                println!("{:#?}", result.output.unwrap());
+                println!("Task {} success!", task_type);
             } else {
-                println!("Task failed!")
+                println!("Task {} failed!", task_type)
             }
         }
         "overflow_check" => {
@@ -45,7 +46,7 @@ pub fn print_pretty_output(task_type: &str, output: Option<serde_json::Value>) {
         "build_and_return_hash" => {
             let result: TaskResult = serde_json::from_value(output).unwrap();
             if result.success {
-                println!("Build succeeded! Hash: {}", result.output.unwrap())
+                println!("Build success! Hash: {}", result.output.unwrap())
             } else {
                 println!("Build failed!")
             }
@@ -75,4 +76,9 @@ pub fn print_pretty_output(task_type: &str, output: Option<serde_json::Value>) {
         }
         _ => {}
     }
+}
+
+pub fn pretty_print_error(task_type: &str, error: Option<serde_json::Value>) {
+    let error: TaskError = serde_json::from_value(error.unwrap_or(json!(""))).unwrap();
+    println!("Task {} Failed with error: {}", task_type, error.error);
 }

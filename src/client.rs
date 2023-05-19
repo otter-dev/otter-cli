@@ -10,7 +10,7 @@ use crate::blockchains::Blockchain;
 
 use self::{
     models::{CreateJobResponse, JobRespose},
-    output::print_pretty_output,
+    output::pretty_print_output,
 };
 
 pub mod auth;
@@ -87,7 +87,7 @@ pub async fn listen_for_changes(job_id: &str) {
         if response.job_status.job_state == "success" {
             println!("Job completed!");
             for task in response.tasks {
-                print_pretty_output(&task.task_type, task.task_result);
+                pretty_print_output(&task.task_type, task.task_result);
             }
             break;
         } else if response.job_status.job_state == "failure" {

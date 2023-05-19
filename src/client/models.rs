@@ -50,3 +50,8 @@ pub struct CreateJobResponse {
     pub repo_cmds: Vec<Value>,
     pub tasks: Vec<TaskCommand>,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TaskError {
+    pub error: String,
+}

@@ -1,5 +1,3 @@
-use std::println;
-
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use inquire::{error::InquireResult, required, Text};
@@ -15,7 +13,8 @@ use crate::{
     client::{
         auth::{authenticate, is_authenticated},
         listen_for_changes,
-        output::print_pretty_output,
+        models::JobRespose,
+        output::{pretty_print_error, pretty_print_output},
         process_create_task, process_get_job,
     },
     endpoints::{select_endpoint, Endpoint},
@@ -92,11 +91,7 @@ async fn clap_mode(cli: OtrCliArgs) -> InquireResult<()> {
         Some(Commands::Get(args)) => {
             let response = process_get_job(&args.id).await;
             match response {
-                Ok(response) => {
-                    for task in response.tasks {
-                        print_pretty_output(&task.task_type, task.task_result);
-                    }
-                }
+                Ok(response) => handle_job_response(response),
                 Err(e) => println!("An unexpected error occurred : {}", e),
             }
             Ok(())
@@ -105,6 +100,27 @@ async fn clap_mode(cli: OtrCliArgs) -> InquireResult<()> {
             println!("Please provide either a command or use the interactive flag -i.");
             OtrCliArgs::command().print_help()?;
             Ok(())
+        }
+    }
+}
+
+fn handle_job_response(response: JobRespose) {
+    if response.job_status.job_state == "pending" {
+        println!("Your job is still in queue to be processed.");
+        return;
+    }
+
+    for task in response.tasks {
+        if task.task_state == "pending" {
+            println!("Your task is still in queue to be processed.");
+        } else if task.task_state == "running" {
+            println!(
+                "Your task is being processed. Please wait a moment while we complete the task."
+            );
+        } else if task.task_state == "failure" {
+            pretty_print_error(&task.task_type, task.task_result);
+        } else {
+            pretty_print_output(&task.task_type, task.task_result);
         }
     }
 }
@@ -171,11 +187,7 @@ async fn get_task() -> Result<()> {
     let response = process_get_job(&job_id).await;
 
     match response {
-        Ok(response) => {
-            for task in response.tasks {
-                print_pretty_output(&task.task_type, task.task_result);
-            }
-        }
+        Ok(response) => handle_job_response(response),
         Err(e) => println!("An unexpected error occurred : {}", e),
     }
     Ok(())
