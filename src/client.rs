@@ -6,11 +6,15 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use serde_json::json;
 use tokio::time::{sleep, Duration};
 
-use crate::{
-    blockchains::Blockchain,
+use crate::blockchains::Blockchain;
+
+use self::{
     models::{CreateJobResponse, JobRespose},
     output::print_pretty_output,
 };
+
+pub mod models;
+pub mod output;
 
 const API_URL: &str = "https://api.osec.io";
 

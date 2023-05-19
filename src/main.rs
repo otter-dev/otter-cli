@@ -1,23 +1,22 @@
 use std::println;
 
 use anyhow::Result;
-
-use blockchains::solana::SolanaTaskCommand;
 use clap::{CommandFactory, Parser};
-use clap_args::{CliArgs, Commands, CreateTaskCommands};
-use client::process_get_job;
-use endpoints::Endpoint;
 use inquire::{error::InquireResult, required, Text};
-use output::print_pretty_output;
 use serde_json::json;
 
 use crate::{
     auth::{authenticate, is_authenticated},
-    blockchains::solana::get_task_command_list_from_vec,
-    blockchains::{select_blockchain, Blockchain},
-    client::listen_for_changes,
-    client::process_create_task,
-    endpoints::select_endpoint,
+    blockchains::{
+        select_blockchain,
+        solana::{get_task_command_list_from_vec, SolanaTaskCommand},
+        Blockchain,
+    },
+    clap_args::{CliArgs, Commands, CreateTaskCommands},
+    client::{
+        listen_for_changes, output::print_pretty_output, process_create_task, process_get_job,
+    },
+    endpoints::{select_endpoint, Endpoint},
 };
 
 mod auth;
@@ -25,8 +24,6 @@ mod blockchains;
 mod clap_args;
 mod client;
 mod endpoints;
-mod models;
-mod output;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> InquireResult<()> {
@@ -62,7 +59,7 @@ async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
                             let job_id = response.job_id;
                             listen_for_changes(&job_id).await;
                         }
-                        Err(e) => println!("Error : {}", e),
+                        Err(e) => println!("An unexpected error occurred : {}", e),
                     }
                 }
             }
@@ -87,7 +84,7 @@ async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
                     let job_id = response.job_id;
                     listen_for_changes(&job_id).await;
                 }
-                Err(e) => println!("Error : {}", e),
+                Err(e) => println!("An unexpected error occurred : {}", e),
             }
             Ok(())
         }
@@ -99,12 +96,12 @@ async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
                         print_pretty_output(&task.task_type, task.task_result);
                     }
                 }
-                Err(e) => println!("Error : {}", e),
+                Err(e) => println!("An unexpected error occurred : {}", e),
             }
             Ok(())
         }
         None => {
-            println!("Please provide either a command or use the interactive flag.");
+            println!("Please provide either a command or use the interactive flag -i.");
             CliArgs::command().print_help()?;
             Ok(())
         }
@@ -136,11 +133,11 @@ async fn create_tasks() -> Result<()> {
 
     let chain = select_blockchain()?;
 
-    let git_repo = Text::new("Enter git repo url:")
+    let git_repo = Text::new("Please enter the URL of the Git repository:")
         .with_validator(required!())
         .prompt()?;
 
-    let branch_or_hash = Text::new("Enter git branch or commit hash:")
+    let branch_or_hash = Text::new("Please enter the Git branch or commit hash:")
         .with_validator(required!())
         .prompt()?;
 
@@ -155,7 +152,7 @@ async fn create_tasks() -> Result<()> {
             let job_id = response.job_id;
             listen_for_changes(&job_id).await;
         }
-        Err(e) => println!("Error : {}", e),
+        Err(e) => println!("An unexpected error occurred : {}", e),
     }
 
     Ok(())
@@ -166,7 +163,7 @@ async fn get_task() -> Result<()> {
         anyhow::bail!("You must authenticate before creating tasks");
     }
 
-    let job_id = Text::new("Enter job id:")
+    let job_id = Text::new("Please enter the job ID to retrieve the result:")
         .with_validator(required!())
         .prompt()?;
 
@@ -178,7 +175,7 @@ async fn get_task() -> Result<()> {
                 print_pretty_output(&task.task_type, task.task_result);
             }
         }
-        Err(e) => println!("Error : {}", e),
+        Err(e) => println!("An unexpected error occurred : {}", e),
     }
     Ok(())
 }
