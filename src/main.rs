@@ -6,29 +6,30 @@ use inquire::{error::InquireResult, required, Text};
 use serde_json::json;
 
 use crate::{
-    auth::{authenticate, is_authenticated},
     blockchains::{
         select_blockchain,
         solana::{get_task_command_list_from_vec, SolanaTaskCommand},
         Blockchain,
     },
-    clap_args::{CliArgs, Commands, CreateTaskCommands},
+    cli::{Commands, CreateTaskCommands, OtrCliArgs},
     client::{
-        listen_for_changes, output::print_pretty_output, process_create_task, process_get_job,
+        auth::{authenticate, is_authenticated},
+        listen_for_changes,
+        output::print_pretty_output,
+        process_create_task, process_get_job,
     },
     endpoints::{select_endpoint, Endpoint},
 };
 
-mod auth;
 mod blockchains;
-mod clap_args;
+mod cli;
 mod client;
 mod endpoints;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> InquireResult<()> {
     tracing_subscriber::fmt::init();
-    let cli = CliArgs::parse();
+    let cli = OtrCliArgs::parse();
 
     if cli.interactive {
         interactive_mode().await?;
@@ -38,7 +39,7 @@ async fn main() -> InquireResult<()> {
     }
 }
 
-async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
+async fn clap_mode(cli: OtrCliArgs) -> InquireResult<()> {
     // If the user is not authenticated, authenticate them
     if !is_authenticated() {
         let _ = authenticate().await;
@@ -102,7 +103,7 @@ async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
         }
         None => {
             println!("Please provide either a command or use the interactive flag -i.");
-            CliArgs::command().print_help()?;
+            OtrCliArgs::command().print_help()?;
             Ok(())
         }
     }

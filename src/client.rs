@@ -13,6 +13,7 @@ use self::{
     output::print_pretty_output,
 };
 
+pub mod auth;
 pub mod models;
 pub mod output;
 
