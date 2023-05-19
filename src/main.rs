@@ -8,6 +8,7 @@ use clap_args::{CliArgs, Commands, CreateTaskCommands};
 use client::process_get_job;
 use endpoints::Endpoint;
 use inquire::{error::InquireResult, required, Text};
+use output::print_pretty_output;
 use serde_json::json;
 
 use crate::{
@@ -92,14 +93,14 @@ async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
         }
         Some(Commands::Get(args)) => {
             let response = process_get_job(&args.id).await;
-
             match response {
                 Ok(response) => {
-                    println!("Job : {:#?}", response);
+                    for task in response.tasks {
+                        print_pretty_output(&task.task_type, task.task_result);
+                    }
                 }
                 Err(e) => println!("Error : {}", e),
             }
-
             Ok(())
         }
         None => {
@@ -151,7 +152,8 @@ async fn create_tasks() -> Result<()> {
 
     match response {
         Ok(response) => {
-            println!("Job created : {:#?}", response);
+            let job_id = response.job_id;
+            listen_for_changes(&job_id).await;
         }
         Err(e) => println!("Error : {}", e),
     }
@@ -172,9 +174,11 @@ async fn get_task() -> Result<()> {
 
     match response {
         Ok(response) => {
-            println!("{:#?}", response);
-            Ok(())
+            for task in response.tasks {
+                print_pretty_output(&task.task_type, task.task_result);
+            }
         }
-        Err(e) => Err(e),
+        Err(e) => println!("Error : {}", e),
     }
+    Ok(())
 }

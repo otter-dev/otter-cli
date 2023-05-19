@@ -33,7 +33,14 @@ pub fn print_pretty_output(task_type: &str, output: Option<serde_json::Value>) {
         }
         "overflow_check" => {
             let result: OverflowCheckResult = serde_json::from_value(output).unwrap();
-            println!("Overflow checks are {}", if result.success { "enabled" } else { "disabled" });
+            println!(
+                "Overflow checks are {}",
+                if result.success {
+                    "enabled"
+                } else {
+                    "disabled"
+                }
+            );
         }
         "build_and_return_hash" => {
             let result: TaskResult = serde_json::from_value(output).unwrap();
@@ -60,9 +67,10 @@ pub fn print_pretty_output(task_type: &str, output: Option<serde_json::Value>) {
             let result: TaskResult = serde_json::from_value(output).unwrap();
             if result.success {
                 println!("Formal verification succeeded!");
-                println!("{:#?}", result.output.unwrap());
+                println!("{}", result.output.unwrap());
             } else {
-                println!("Formal verification failed!")
+                println!("Formal verification failed!");
+                println!("{}", result.output.unwrap());
             }
         }
         _ => {}

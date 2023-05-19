@@ -50,5 +50,3 @@ pub struct CreateJobResponse {
     pub repo_cmds: Vec<Value>,
     pub tasks: Vec<TaskCommand>,
 }
-
-
