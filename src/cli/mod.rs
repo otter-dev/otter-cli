@@ -6,7 +6,7 @@ use crate::blockchains::solana::SolanaTaskCommand;
 #[derive(Debug, Parser)]
 #[clap(name = "Otter Suite")]
 #[clap(about = "CLI tool for Otter Suite API", long_about = None)]
-pub struct CliArgs {
+pub struct OtrCliArgs {
     #[clap(subcommand)]
     pub command: Option<Commands>,
     /// Use the interactive mode
