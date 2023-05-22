@@ -6,7 +6,10 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use serde_json::json;
 use tokio::time::{sleep, Duration};
 
-use crate::blockchains::Blockchain;
+use crate::{
+    blockchains::Blockchain,
+    models::{CreateJobResponse, JobRespose},
+};
 
 use self::{
     models::{CreateJobResponse, JobRespose},
