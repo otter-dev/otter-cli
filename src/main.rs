@@ -1,28 +1,122 @@
-use std::io::Read;
+use std::println;
 
 use anyhow::Result;
 
+use blockchains::solana::SolanaTaskCommand;
+use clap::{CommandFactory, Parser};
+use clap_args::{CliArgs, Commands, CreateTaskCommands};
 use client::process_get_job;
 use endpoints::Endpoint;
-use inquire::{error::InquireResult, required, InquireError, Text};
+use inquire::{error::InquireResult, required, Text};
+use serde_json::json;
 
 use crate::{
-    blockchains::select_blockchain, client::process_create_task, endpoints::select_endpoint,
+    auth::{authenticate, is_authenticated},
+    blockchains::solana::get_task_command_list_from_vec,
+    blockchains::{select_blockchain, Blockchain},
+    client::listen_for_changes,
+    client::process_create_task,
+    endpoints::select_endpoint,
 };
 
+mod auth;
 mod blockchains;
+mod clap_args;
 mod client;
 mod endpoints;
-
-const CLIENT_ID: &str = "Iv1.4de4d4a1d7ba2f81";
+mod models;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> InquireResult<()> {
     tracing_subscriber::fmt::init();
+    let cli = CliArgs::parse();
+
+    if cli.interactive {
+        interactive_mode().await?;
+        Ok(())
+    } else {
+        clap_mode(cli).await
+    }
+}
+
+async fn clap_mode(cli: CliArgs) -> InquireResult<()> {
+    // If the user is not authenticated, authenticate them
+    if !is_authenticated() {
+        let _ = authenticate().await;
+    }
+    // Process the command
+    match cli.command {
+        Some(Commands::Create(args)) => {
+            match args.create_task_commands {
+                CreateTaskCommands::Solana(args) => {
+                    let chain = Blockchain::Solana;
+                    let repo_cmds = chain.select_repo_builder_commands();
+                    let task_cmds = get_task_command_list_from_vec(args.tasks);
+                    let response =
+                        process_create_task(chain, args.remote, args.commit, repo_cmds, task_cmds)
+                            .await;
+                    match response {
+                        Ok(response) => {
+                            let job_id = response.job_id;
+                            listen_for_changes(&job_id).await;
+                        }
+                        Err(e) => println!("Error : {}", e),
+                    }
+                }
+            }
+            Ok(())
+        }
+        Some(Commands::Verify(args)) => {
+            let chain = Blockchain::Solana;
+            let repo_cmds = vec![json!({
+                "blockchain": "solana",
+                "data": {
+                    "set_program_path": {
+                        "path": args.path
+                    }
+                }
+            })];
+            let task_cmds =
+                get_task_command_list_from_vec(vec![SolanaTaskCommand::FormalVerification]);
+            let response =
+                process_create_task(chain, args.remote, args.commit, repo_cmds, task_cmds).await;
+            match response {
+                Ok(response) => {
+                    let job_id = response.job_id;
+                    listen_for_changes(&job_id).await;
+                }
+                Err(e) => println!("Error : {}", e),
+            }
+            Ok(())
+        }
+        Some(Commands::Get(args)) => {
+            let response = process_get_job(&args.id).await;
+
+            match response {
+                Ok(response) => {
+                    println!("Job : {:#?}", response);
+                }
+                Err(e) => println!("Error : {}", e),
+            }
+
+            Ok(())
+        }
+        None => {
+            println!("Please provide either a command or use the interactive flag.");
+            CliArgs::command().print_help()?;
+            Ok(())
+        }
+    }
+}
+
+async fn interactive_mode() -> InquireResult<()> {
     let task = select_endpoint()?;
 
+    if !is_authenticated() {
+        let _ = authenticate().await;
+    }
+
     let res = match task {
-        Endpoint::Authenticate => authenticate().await,
         Endpoint::CreateTask => create_tasks().await,
         Endpoint::GetTask => get_task().await,
     };
@@ -30,24 +124,6 @@ async fn main() -> InquireResult<()> {
     if let Err(e) = res {
         tracing::error!("{:?}", e);
     }
-
-    Ok(())
-}
-
-fn is_authenticated() -> bool {
-    otter_auth_client::get_config().is_ok()
-}
-
-async fn authenticate() -> Result<()> {
-    let auth = otter_auth_client::get_github_auth_code(CLIENT_ID)
-        .await
-        .map_err(|e| InquireError::Custom(Box::new(e)))?;
-
-    println!("Please go to the following url: {}", &auth.verification_uri);
-    println!("Enter the following code: {}", &auth.user_code);
-    println!("Press enter when you have completed authentication");
-    let _ = std::io::stdin().read(&mut [0u8]).unwrap();
-    otter_auth_client::save_config(&auth).map_err(|e| InquireError::Custom(Box::new(e)))?;
     Ok(())
 }
 
@@ -91,7 +167,7 @@ async fn get_task() -> Result<()> {
         .with_validator(required!())
         .prompt()?;
 
-    let response = process_get_job(job_id).await;
+    let response = process_get_job(&job_id).await;
 
     match response {
         Ok(response) => {
