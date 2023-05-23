@@ -78,7 +78,7 @@ pub async fn process_get_job(job_id: &str) -> Result<JobRespose> {
 pub async fn listen_for_changes(job_id: &str) {
     println!("Job created with ID: {}", job_id);
     println!(
-        "Alternatively, you can close this window and run `otr get -i {}` to view the result later",
+        "Alternatively, you can close this window and run `otr check {}` to view the result later",
         job_id
     );
     println!("Waiting for job to process...");
@@ -94,6 +94,6 @@ pub async fn listen_for_changes(job_id: &str) {
             println!("Job failed!");
             break;
         }
-        sleep(Duration::from_secs(2)).await;
+        sleep(Duration::from_secs(5)).await;
     }
 }

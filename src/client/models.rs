@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::blockchains::solana::SolanaTaskCommand;
+use crate::blockchains::SolanaTaskCommand;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Job {
@@ -54,4 +54,10 @@ pub struct CreateJobResponse {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TaskError {
     pub error: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct TaskResult {
+    pub success: bool,
+    pub output: Option<String>,
 }
