@@ -1,103 +1,114 @@
-use std::io::Read;
-
 use anyhow::Result;
-
-use client::process_get_job;
-use endpoints::Endpoint;
-use inquire::{error::InquireResult, required, InquireError, Text};
+use clap::Args;
+use clap::Parser;
+use serde_json::json;
 
 use crate::{
-    blockchains::select_blockchain, client::process_create_task, endpoints::select_endpoint,
+    blockchains::{get_task_command_list_from_vec, Blockchain, SolanaTaskCommand},
+    client::{
+        auth::{authenticate, is_authenticated},
+        listen_for_changes,
+        models::JobRespose,
+        output::{pretty_print_error, pretty_print_output},
+        process_create_task, process_get_job,
+    },
 };
 
 mod blockchains;
 mod client;
-mod endpoints;
 
-const CLIENT_ID: &str = "Iv1.4de4d4a1d7ba2f81";
+/// CLI tool for Otter Suite API
+#[derive(Debug, Parser)]
+pub enum Commands {
+    /// Get the status of a job by ID
+    Check(CheckJob),
+    /// Submit formal verification job to the Otter Suite
+    #[clap(arg_required_else_help = true)]
+    SolanaVerify(SolanaVerifyArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct CheckJob {
+    /// Job ID to check
+    pub id: String,
+}
+
+// Create args for the Solana projects
+#[derive(Debug, Args)]
+pub struct SolanaVerifyArgs {
+    /// Project git repository
+    #[clap(long, short)]
+    pub repository: String,
+    /// Commit or branch of the project to use
+    #[clap(long, short)]
+    pub branch: String,
+    /// Program path
+    #[clap(long, short)]
+    pub path: String,
+}
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() -> InquireResult<()> {
+async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
-    let task = select_endpoint()?;
+    let command = Commands::parse();
 
-    let res = match task {
-        Endpoint::Authenticate => authenticate().await,
-        Endpoint::CreateTask => create_tasks().await,
-        Endpoint::GetTask => get_task().await,
-    };
-
-    if let Err(e) = res {
-        tracing::error!("{:?}", e);
-    }
-
-    Ok(())
-}
-
-fn is_authenticated() -> bool {
-    otter_auth_client::get_config().is_ok()
-}
-
-async fn authenticate() -> Result<()> {
-    let auth = otter_auth_client::get_github_auth_code(CLIENT_ID)
-        .await
-        .map_err(|e| InquireError::Custom(Box::new(e)))?;
-
-    println!("Please go to the following url: {}", &auth.verification_uri);
-    println!("Enter the following code: {}", &auth.user_code);
-    println!("Press enter when you have completed authentication");
-    let _ = std::io::stdin().read(&mut [0u8]).unwrap();
-    otter_auth_client::save_config(&auth).map_err(|e| InquireError::Custom(Box::new(e)))?;
-    Ok(())
-}
-
-async fn create_tasks() -> Result<()> {
+    // If the user is not authenticated, authenticate them
     if !is_authenticated() {
-        anyhow::bail!("You must authenticate before creating tasks");
+        let _ = authenticate().await;
     }
-
-    let chain = select_blockchain()?;
-
-    let git_repo = Text::new("Enter git repo url:")
-        .with_validator(required!())
-        .prompt()?;
-
-    let branch_or_hash = Text::new("Enter git branch or commit hash:")
-        .with_validator(required!())
-        .prompt()?;
-
-    let repo_cmds = chain.select_repo_builder_commands();
-    let task_cmd_list = chain.get_task_command_list();
-
-    let response =
-        process_create_task(chain, git_repo, branch_or_hash, repo_cmds, task_cmd_list).await;
-
-    match response {
-        Ok(response) => {
-            println!("Job created : {:#?}", response);
-        }
-        Err(e) => println!("Error : {}", e),
-    }
-
-    Ok(())
-}
-
-async fn get_task() -> Result<()> {
-    if !is_authenticated() {
-        anyhow::bail!("You must authenticate before creating tasks");
-    }
-
-    let job_id = Text::new("Enter job id:")
-        .with_validator(required!())
-        .prompt()?;
-
-    let response = process_get_job(job_id).await;
-
-    match response {
-        Ok(response) => {
-            println!("{:#?}", response);
+    // Process the command
+    match command {
+        Commands::SolanaVerify(args) => {
+            let chain = Blockchain::Solana;
+            let repo_cmds = vec![json!({
+                "blockchain": "solana",
+                "data": {
+                    "set_program_path": {
+                        "path": args.path
+                    }
+                }
+            })];
+            let task_cmds =
+                get_task_command_list_from_vec(vec![SolanaTaskCommand::FormalVerification]);
+            let response =
+                process_create_task(chain, args.repository, args.branch, repo_cmds, task_cmds).await;
+            match response {
+                Ok(response) => {
+                    let job_id = response.job_id;
+                    listen_for_changes(&job_id).await;
+                }
+                Err(e) => println!("An unexpected error occurred : {}", e),
+            }
             Ok(())
         }
-        Err(e) => Err(e),
+        Commands::Check(args) => {
+            let response = process_get_job(&args.id).await;
+            match response {
+                Ok(response) => handle_job_response(response),
+                Err(e) => println!("An unexpected error occurred : {}", e),
+            }
+            Ok(())
+        }
+    }
+}
+
+fn handle_job_response(response: JobRespose) {
+    if response.job_status.job_state == "pending" {
+        println!("Your job is still in queue to be processed.");
+        return;
+    }
+
+    for task in response.tasks {
+        if task.task_state == "pending" {
+            println!("Your task is still in queue to be processed.");
+        } else if task.task_state == "running" {
+            println!(
+                "Your task is being processed. Please wait a moment while we complete the task."
+            );
+        } else if task.task_state == "failure" {
+            pretty_print_error(&task.task_type, task.task_result);
+        } else {
+            pretty_print_output(&task.task_type, task.task_result);
+        }
     }
 }
