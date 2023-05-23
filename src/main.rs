@@ -4,12 +4,8 @@ use inquire::{error::InquireResult, required, Text};
 use serde_json::json;
 
 use crate::{
-    blockchains::{
-        select_blockchain,
-        solana::{get_task_command_list_from_vec, SolanaTaskCommand},
-        Blockchain,
-    },
-    cli::{Commands, CreateTaskCommands, OtrCliArgs},
+    blockchains::Blockchain,
+    cli::{Commands, OtrCliArgs},
     client::{
         auth::{authenticate, is_authenticated},
         listen_for_changes,
@@ -45,26 +41,6 @@ async fn clap_mode(cli: OtrCliArgs) -> InquireResult<()> {
     }
     // Process the command
     match cli.command {
-        Some(Commands::Create(args)) => {
-            match args.create_task_commands {
-                CreateTaskCommands::Solana(args) => {
-                    let chain = Blockchain::Solana;
-                    let repo_cmds = chain.select_repo_builder_commands();
-                    let task_cmds = get_task_command_list_from_vec(args.tasks);
-                    let response =
-                        process_create_task(chain, args.remote, args.commit, repo_cmds, task_cmds)
-                            .await;
-                    match response {
-                        Ok(response) => {
-                            let job_id = response.job_id;
-                            listen_for_changes(&job_id).await;
-                        }
-                        Err(e) => println!("An unexpected error occurred : {}", e),
-                    }
-                }
-            }
-            Ok(())
-        }
         Some(Commands::Verify(args)) => {
             let chain = Blockchain::Solana;
             let repo_cmds = vec![json!({
@@ -75,8 +51,7 @@ async fn clap_mode(cli: OtrCliArgs) -> InquireResult<()> {
                     }
                 }
             })];
-            let task_cmds =
-                get_task_command_list_from_vec(vec![SolanaTaskCommand::FormalVerification]);
+            let task_cmds = vec![json!({"blockchain": "solana", "data": "formal_verification"})];
             let response =
                 process_create_task(chain, args.remote, args.commit, repo_cmds, task_cmds).await;
             match response {
@@ -84,14 +59,6 @@ async fn clap_mode(cli: OtrCliArgs) -> InquireResult<()> {
                     let job_id = response.job_id;
                     listen_for_changes(&job_id).await;
                 }
-                Err(e) => println!("An unexpected error occurred : {}", e),
-            }
-            Ok(())
-        }
-        Some(Commands::Get(args)) => {
-            let response = process_get_job(&args.id).await;
-            match response {
-                Ok(response) => handle_job_response(response),
                 Err(e) => println!("An unexpected error occurred : {}", e),
             }
             Ok(())
@@ -148,7 +115,7 @@ async fn create_tasks() -> Result<()> {
         anyhow::bail!("You must authenticate before creating tasks");
     }
 
-    let chain = select_blockchain()?;
+    let chain = Blockchain::Solana;
 
     let git_repo = Text::new("Please enter the URL of the Git repository:")
         .with_validator(required!())
@@ -158,11 +125,21 @@ async fn create_tasks() -> Result<()> {
         .with_validator(required!())
         .prompt()?;
 
-    let repo_cmds = chain.select_repo_builder_commands();
-    let task_cmd_list = chain.get_task_command_list();
+    let path = Text::new("Please enter the program path:")
+        .with_validator(required!())
+        .prompt()?;
 
-    let response =
-        process_create_task(chain, git_repo, branch_or_hash, repo_cmds, task_cmd_list).await;
+    let repo_cmds = vec![json!({
+        "blockchain": "solana",
+        "data": {
+            "set_program_path": {
+                "path": path
+            }
+        }
+    })];
+    let task_cmds = vec![json!({"blockchain": "solana", "data": "formal_verification"})];
+
+    let response = process_create_task(chain, git_repo, branch_or_hash, repo_cmds, task_cmds).await;
 
     match response {
         Ok(response) => {
