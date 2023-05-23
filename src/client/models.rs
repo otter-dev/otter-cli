@@ -56,7 +56,7 @@ pub struct TaskError {
     pub error: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct TaskResult {
     pub success: bool,
     pub output: Option<String>,
