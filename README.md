@@ -1,42 +1,36 @@
 # Cli Tool to run Otter Suite tests
 
+## Installation
+
+```bash
+cargo install --git https://github.com/otter-dev/otter-cli
+```
+
+## To update
+
+```bash
+cargo install --git https://github.com/otter-dev/otter-cli --force
+```
+
 ## Usage
 
-```bash
-suite-cli --help
-```
+To use Otter CLI we need to authenticate ourself: (You need to be whitelisted contact Osec team if you need any help here)
 
-### Commands
+1. Open the command prompt or terminal on your computer.
+2. Run `otr -h` or `otr --help` to see all the available commands.
 
-```bash
-suite-cli [command] 
-```
+## Authentication
 
-- `verify`      Verifies an onchain program aganist given repo
-- `create-task`  Creates a process to run given tasks on the repo
-- `help`         Print this message or the help of the given subcommand(s)
+- When prompted open the given link and Enter your code and give permission for application.
+- Once the authentication is completed we can now submit jobs to Otter API via CLI.
 
-#### Verify
+## Submitting a Job
 
-```bash
-suite-cli verify -b <BLOCKCHAIN> -r <GIT_REMOTE> -c <GIT_COMMIT> -p <PROGRAM_ID>
-```
+1. Use `ote solana-verify` and pass the required arguments to know more use `otr solana-verify --help`.
+2. Input the required arguments for the Job `-r` or `--repository` for git repository, `-b` for git branch and `-p` for program path.
+3. After submitting this you will get a `jobId` we need this to retrieve the status of the job.
 
-- `-b, --blockchain <BLOCKCHAIN>`  Blockchain to use (available: solana, ethereum, aptos, sui)
-- `-r, --remote <GIT_REMOTE>`      Git remote to use
-- `-c, --commit <GIT_COMMIT>`      Git commit to use
-- `-p, --program <PROGRAM_ID>`     Program id/address of the program deployed on the blockchain.
+## Checking the status of a Job
 
-#### Create Task
-
-```bash
-suite-cli create-task <BLOCKCHAIN> -r <GIT_REMOTE> -c <GIT_COMMIT> -t <TASKS>
-```
-
-- `<BLOCKCHAIN>`  Blockchain to use (available: solana, ethereum, aptos, sui)
-- `-r, --remote <GIT_REMOTE>`      Git remote to use
-- `-c, --commit <GIT_COMMIT>`      Git commit to use
-- `-t, --tasks <TASKS>`            Tasks to run.
-  - None to run all tasks
-  - Comma separated list of tasks to run
-  - `suite-cli create-task <BLOCKCHAIN> --tasks` or `suite-cli create-task <BLOCKCHAIN> -t` to see all available tasks for given blockchain
+1. Use `otr check` and pass the required arguments to know more use `otr check --help`.
+2. Input the required arguments for the Job `otr check <ID>`.
