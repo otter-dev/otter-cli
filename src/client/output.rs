@@ -14,8 +14,8 @@ pub fn pretty_print_output(task_type: &str, output: Option<serde_json::Value>) {
                 println!("Formal verification succeeded!");
             } else {
                 println!("Formal verification failed!");
+                println!("{}", result.output.unwrap());
             }
-            println!("{}", result.output.unwrap());
         }
         _ => {}
     }
